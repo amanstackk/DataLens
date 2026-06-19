@@ -1,8 +1,5 @@
-export const processUpload = (file) => {
-    return {
-        success: true,
-        message: "File uploaded successfully",
-        filename: file.filename,
-        filepath: file.path
-    };
+import { runPython } from "./pythonService.js";
+
+export const analyzeDataset = async (filePath) => {
+    return await runPython(filePath);
 };

@@ -1,6 +1,6 @@
-import { processUpload } from "../services/uploadService";
+import { analyzeDataset } from "../services/uploadService.js";
 
-export const uploadFile = (req, res) => {
+export const uploadFile = async (req, res) => {
 
     if (!req.file) {
         return res.status(400).json({
@@ -9,7 +9,7 @@ export const uploadFile = (req, res) => {
         });
     }
 
-    const result = processUpload(req.file);
+    const result = await analyzeDataset(req.file.path);
 
     res.status(200).json(result);
 };

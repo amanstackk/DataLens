@@ -1,13 +1,69 @@
 import sys
-import pandas as pd
 import json
+import pandas as pd
+
+from analyzers import (
+    get_overview,
+    get_data_types,
+    get_missing_values,
+    get_duplicate_count,
+    get_feature_summary,
+    get_missing_percentage,
+    get_numeric_statistics,
+    get_class_imbalance,
+    get_correlations,
+    get_outliers,
+    get_health_score,
+    get_recommendations
+)
 
 file_path = sys.argv[1]
 
 df = pd.read_csv(file_path)
+
+overview = get_overview(df)
+
+data_types = get_data_types(df)
+
+missing_values = get_missing_values(df)
+
+duplicate_rows = get_duplicate_count(df)
+
+feature_summary = get_feature_summary(df)
+
+missing_percentage = get_missing_percentage(df)
+
+statistics = get_numeric_statistics(df)
+
+class_imbalance = get_class_imbalance(df)
+
+correlations = get_correlations(df)
+
+outliers = get_outliers(df)
+
+health_score = get_health_score(missing_percentage,
+    duplicate_rows,
+    outliers,
+    class_imbalance)
+
+recommendations = get_recommendations(missing_percentage,
+    duplicate_rows,
+    outliers,
+    correlations)
+
 result = {
-    "rows": int(df.shape[0]),
-    "columns": int(df.shape[1])
+    **overview,
+    "dataTypes": data_types,
+    "missingValues": missing_values,
+    "missingPercentage": missing_percentage,
+    "duplicateRows": duplicate_rows,
+    **feature_summary,
+    "statistics": statistics,
+    "classImbalance": class_imbalance,
+    "correlations": correlations,
+    "outliers": outliers,
+    "healthScore": health_score,
+    "recommendations": recommendations
 }
 
 print(json.dumps(result))

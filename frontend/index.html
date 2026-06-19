@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataLens | Intelligence Platform</title>
+    <meta name="description" content="AI-powered Data Quality, EDA, and ML Readiness platform.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="state-upload">
+    <!-- TOP NAVBAR -->
+    <nav class="topbar">
+        <div class="nav-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/></svg>
+            <span>DataLens</span>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-outline btn-sm hidden" id="new-analysis-btn">New Analysis</button>
+        </div>
+    </nav>
+
+    <!-- UPLOAD HERO SECTION -->
+    <main class="hero-container" id="view-upload">
+        <div class="hero-content">
+            <span class="badge">Data Intelligence Platform</span>
+            <h1>Analyze. Validate. Prepare.</h1>
+            <p>Upload any dataset and receive an instant data quality and ML readiness report.</p>
+            
+            <div class="upload-zone" id="upload-zone">
+                <input type="file" id="file-input" accept=".csv" hidden>
+                <div class="upload-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3>Drag & drop your dataset here</h3>
+                <p>Supports .CSV files</p>
+                <button class="btn btn-primary" id="browse-btn">Browse Files</button>
+            </div>
+
+            <div id="upload-error" class="upload-error hidden"></div>
+        </div>
+    </main>
+
+    <!-- LOADING SECTION -->
+    <main class="loading-container hidden" id="view-loading">
+        <div class="loading-card">
+            <div class="spinner"></div>
+            <h3 id="loading-title">Analyzing Dataset...</h3>
+            <p id="loading-subtitle" class="text-muted"></p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <ul class="analysis-steps">
+                <li class="step active" id="step-0">Uploading file...</li>
+                <li class="step pending" id="step-1">Profiling data types...</li>
+                <li class="step pending" id="step-2">Detecting missing values...</li>
+                <li class="step pending" id="step-3">Computing statistics...</li>
+            </ul>
+        </div>
+    </main>
+
+    <!-- ERROR SECTION -->
+    <main class="error-container hidden" id="view-error">
+        <div class="error-card">
+            <div class="error-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <h3>Analysis Failed</h3>
+            <p id="error-message" class="text-muted"></p>
+            <button class="btn btn-primary mt-4" id="retry-btn">Try Again</button>
+        </div>
+    </main>
+
+    <!-- DASHBOARD WORKSPACE -->
+    <div class="dashboard-workspace hidden" id="view-dashboard">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="dataset-info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    <span id="sidebar-filename" class="truncate">Dataset</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-title">Analysis</div>
+                    <a href="#overview" class="nav-item active" data-section="overview">Overview</a>
+                    <a href="#data-quality" class="nav-item" data-section="data-quality">Data Quality</a>
+                    <a href="#statistics" class="nav-item" data-section="statistics">Statistics</a>
+                    <a href="#feature-analysis" class="nav-item" data-section="feature-analysis">Feature Analysis</a>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-title">Intelligence <span class="badge-new">Soon</span></div>
+                    <a href="#ml-readiness" class="nav-item" data-section="ml-readiness">ML Readiness</a>
+                    <a href="#ai-insights" class="nav-item" data-section="ai-insights">AI Insights</a>
+                    <a href="#recommendations" class="nav-item" data-section="recommendations">Recommendations</a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="dashboard-content">
+            <div class="dashboard-header-container">
+                <h2 id="section-title">Overview</h2>
+                <div id="section-actions" class="section-actions"></div>
+            </div>
+
+            <!-- SECTION: OVERVIEW -->
+            <section id="section-overview" class="dashboard-section active">
+                <div class="grid grid-cols-4" id="overview-metrics-container">
+                    <!-- Metric Cards Injected Here -->
+                </div>
+                
+                <div class="grid grid-cols-1 mt-4">
+                    <div class="card" id="overview-health-container">
+                        <div class="card-header">
+                            <h3>Dataset Health</h3>
+                            <span class="text-sm text-muted">Phase 2 Module Placeholder</span>
+                        </div>
+                        <div class="empty-state">
+                            <p>Health Score calculation will be available in future updates.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: DATA QUALITY -->
+            <section id="section-data-quality" class="dashboard-section hidden">
+                <div class="grid grid-cols-1 mb-4" id="dq-metrics-container">
+                    <!-- Data Quality metrics (e.g. Duplicates) -->
+                </div>
+
+                <div class="grid grid-cols-2 mt-4" id="dq-charts-container">
+                    <!-- Missing Values Charts Injected Here -->
+                </div>
+
+                <div id="dq-outliers-container" class="mt-4">
+                    <!-- Outliers table injected here -->
+                </div>
+
+                <div class="card mt-4" id="dq-anomaly-container">
+                    <div class="card-header">
+                        <h3>Anomaly Detection</h3>
+                        <span class="text-sm text-muted">Phase 3 Module Placeholder</span>
+                    </div>
+                    <div class="empty-state">
+                        <p>Isolation Forest anomaly detection will be available in future updates.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: STATISTICS -->
+            <section id="section-statistics" class="dashboard-section hidden">
+                <div id="statistics-table-container">
+                    <!-- Numeric Statistics Table Injected Here -->
+                </div>
+                
+                <div id="data-types-table-container" class="mt-4">
+                    <!-- Data Types Table Injected Here -->
+                </div>
+
+                <div class="card mt-4" id="stats-distribution-container">
+                    <div class="card-header">
+                        <h3>Distribution Analysis</h3>
+                        <span class="text-sm text-muted">Phase 2 Module Placeholder</span>
+                    </div>
+                    <div class="empty-state">
+                        <p>Detailed distribution plots (histograms/KDE) will be available in future updates.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: FEATURE ANALYSIS -->
+            <section id="section-feature-analysis" class="dashboard-section hidden">
+                <div id="correlations-container">
+                    <!-- Top Correlations Table Injected Here -->
+                </div>
+
+                <div id="class-imbalance-container" class="mt-4">
+                    <!-- Class Imbalance Charts Injected Here -->
+                </div>
+
+                <div class="card mt-4" id="feature-importance-container">
+                    <div class="card-header">
+                        <h3>Feature Importance</h3>
+                        <span class="text-sm text-muted">Phase 2 Module Placeholder</span>
+                    </div>
+                    <div class="empty-state">
+                        <p>Tree-based feature importance scores will be available in future updates.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: ML READINESS (PLACEHOLDER) -->
+            <section id="section-ml-readiness" class="dashboard-section hidden">
+                <div class="card module-placeholder">
+                    <div class="placeholder-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                    <h3>ML Readiness Score</h3>
+                    <p class="text-muted">Phase 3 Module</p>
+                    <p class="mt-2 text-sm max-w-md mx-auto">This module will evaluate your dataset against standard ML requirements (target leakage, cardinality, train/test split viability) and generate a readiness score.</p>
+                </div>
+            </section>
+
+            <!-- SECTION: AI INSIGHTS (PLACEHOLDER) -->
+            <section id="section-ai-insights" class="dashboard-section hidden">
+                <div class="card module-placeholder">
+                    <div class="placeholder-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    </div>
+                    <h3>AI Generated Executive Report</h3>
+                    <p class="text-muted">Phase 3 Module</p>
+                    <p class="mt-2 text-sm max-w-md mx-auto">This module will use an LLM to generate plain-English summaries, business insights, and automated data cleaning code snippets based on the analysis.</p>
+                </div>
+            </section>
+
+            <!-- SECTION: RECOMMENDATIONS (PLACEHOLDER) -->
+            <section id="section-recommendations" class="dashboard-section hidden">
+                <div class="card module-placeholder">
+                    <div class="placeholder-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <h3>Actionable Recommendations</h3>
+                    <p class="text-muted">Phase 2 Module</p>
+                    <p class="mt-2 text-sm max-w-md mx-auto">This module will provide specific, actionable steps to improve data quality, such as imputation strategies or identifying highly collinear features to drop.</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

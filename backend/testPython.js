@@ -1,7 +1,7 @@
 import { runPython } from "./services/pythonService.js";
 
 try {
-    const result = await runPython();
+    const result = await runPython("../python-service/Iris.csv");
 
     console.log("Python Result:");
     console.log(result);

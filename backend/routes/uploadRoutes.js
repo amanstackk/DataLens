@@ -6,6 +6,10 @@ const router = express.Router();
 
 router.post(
     "/upload",
+    (req, res, next) => {
+        console.log("Upload route hit");
+        next();
+    },
     upload.single("dataset"),
     uploadFile
 );

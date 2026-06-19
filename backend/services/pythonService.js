@@ -1,11 +1,14 @@
 import { spawn } from "child_process";
 
-export const runPython = () => {
+export const runPython = (filePath) => {
     return new Promise((resolve, reject) => {
 
         const pythonProcess = spawn(
             "python",
-            ["../python-service/app.py"]
+            [
+                "../python-service/app.py",
+                filePath
+            ]
         );
 
         let data = "";
