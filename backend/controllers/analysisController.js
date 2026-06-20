@@ -1,7 +1,33 @@
 import { getHealthData } from "../services/analysisService.js";
+import { runMlPython } from "../services/pythonService.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const getHealthStatus = (req, res) => {
     const data = getHealthData();
-    
     res.json(data);
+};
+
+export const runMlAnalysis = async (req, res) => {
+    try {
+        const { fileName, targetColumn } = req.body;
+        
+        if (!fileName || !targetColumn) {
+            return res.status(400).json({ success: false, message: "Missing fileName or targetColumn" });
+        }
+
+        // Determine the absolute path of the uploaded file
+        // The file is stored in DataLens/uploads/
+        const rootDir = path.join(__dirname, "..", "..", "uploads");
+        const filePath = path.join(rootDir, fileName);
+
+        const result = await runMlPython(filePath, targetColumn);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("ML Analysis Error:", error);
+        res.status(500).json({ success: false, message: error.toString() });
+    }
 };

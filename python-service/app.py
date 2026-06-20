@@ -14,7 +14,10 @@ from analyzers import (
     get_correlations,
     get_outliers,
     get_health_score,
-    get_recommendations
+    get_recommendations,
+    get_target_analysis,
+    get_problem_type,
+    get_feature_importance
 )
 
 file_path = sys.argv[1]
@@ -51,6 +54,9 @@ recommendations = get_recommendations(missing_percentage,
     outliers,
     correlations)
 
+target_analysis = get_target_analysis(df)
+
+
 result = {
     **overview,
     "dataTypes": data_types,
@@ -63,7 +69,8 @@ result = {
     "correlations": correlations,
     "outliers": outliers,
     "healthScore": health_score,
-    "recommendations": recommendations
+    "recommendations": recommendations,
+    "targetAnalysis": target_analysis
 }
 
 print(json.dumps(result))

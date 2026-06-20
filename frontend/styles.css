@@ -489,6 +489,56 @@ h3 { font-size: 1rem; font-weight: 500; }
     font-size: 0.9rem;
 }
 
+/* ===== ANALYST INSIGHTS & TARGET SELECTION ===== */
+.target-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+}
+.target-card:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+.target-card.selected {
+    border-color: var(--accent-primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+.conf-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+}
+.conf-high {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--semantic-success);
+}
+.conf-med {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--semantic-warning);
+}
+.conf-low {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--semantic-danger);
+}
+.analyst-message {
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--accent-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
 /* ===== ANIMATIONS ===== */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }

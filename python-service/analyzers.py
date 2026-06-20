@@ -1,5 +1,9 @@
 import pandas as pd
 import sys
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor
+)
 
 def safe_number(value):
 
@@ -16,14 +20,12 @@ def get_overview(df):
         "columnNames": df.columns.tolist()
     }
 
-
 def get_data_types(df):
 
     return {
         column: str(dtype)
         for column, dtype in df.dtypes.items()
     }
-
 
 def get_missing_values(df):
 
@@ -33,13 +35,11 @@ def get_missing_values(df):
           .to_dict()
     )
 
-
 def get_duplicate_count(df):
 
     return int(
         df.duplicated().sum()
     )
-
 
 def get_feature_summary(df):
 
@@ -271,3 +271,205 @@ def get_recommendations(
         )
 
     return recommendations
+
+def get_target_analysis(df):
+
+    candidates = []
+
+    all_columns = df.columns.tolist()
+
+    target_keywords = [
+        "target",
+        "label",
+        "class",
+        "output",
+        "y",
+        "churn",
+        "survived",
+        "diagnosis",
+        "default",
+        "fraud",
+        "species",
+        "exited",
+        "spam",
+        "ham",
+        "outcome",
+        "status"
+    ]
+
+    for col in all_columns:
+
+        col_lower = str(col).lower()
+
+        unique_count = df[col].nunique()
+
+        # Rule 1: Common target names
+        if col_lower in target_keywords:
+
+            candidates.append({
+                "name": col,
+                "confidence": 95,
+                "reason": "Matched common target naming pattern"
+            })
+
+            continue
+
+        # Rule 2: Binary features (0/1, Yes/No, True/False, etc.)
+        if unique_count == 2:
+
+            candidates.append({
+                "name": col,
+                "confidence": 84,
+                "reason": "Binary outcome-like feature"
+            })
+
+            continue
+
+        # Rule 3: Low-cardinality categorical features
+        dtype = str(df[col].dtype)
+
+        if (
+            2 < unique_count <= 10 and
+            dtype in ["object", "category"]
+        ):
+
+            candidates.append({
+                "name": col,
+                "confidence": 75,
+                "reason": "Low-cardinality categorical feature"
+            })
+
+            continue
+
+    candidates.sort(
+        key=lambda x: x["confidence"],
+        reverse=True
+    )
+
+    return {
+        "candidates": candidates[:5],
+        "allColumns": all_columns,
+        "selectedTarget": None
+    }
+
+def get_problem_type(df, target_column):
+
+    if not target_column:
+
+        return {
+            "type": None,
+            "confidence": 0,
+            "reason": "No target selected"
+        }
+
+    target = df[target_column]
+
+    unique_values = target.nunique()
+
+    total_rows = len(df)
+
+    unique_ratio = unique_values / total_rows
+
+    dtype = str(target.dtype)
+
+    # Binary Classification
+    if unique_values == 2:
+
+        return {
+            "type": "Binary Classification",
+            "confidence": 95,
+            "reason": "Target contains exactly 2 unique values"
+        }
+
+    # Categorical Classification
+    if dtype in ["object", "category"]:
+
+        return {
+            "type": "Multi-Class Classification",
+            "confidence": 90,
+            "reason": f"Target contains {unique_values} classes"
+        }
+
+    # Numeric target with low cardinality
+    if unique_values <= 20:
+
+        return {
+            "type": "Possible Classification",
+            "confidence": 70,
+            "reason": "Numeric target with few unique values"
+        }
+
+    # Numeric target with high cardinality
+    if unique_ratio > 0.1:
+
+        return {
+            "type": "Regression",
+            "confidence": 90,
+            "reason": "Numeric target with high cardinality"
+        }
+
+    return {
+        "type": "Unknown",
+        "confidence": 50,
+        "reason": "Could not confidently determine problem type"
+    }
+
+def get_feature_importance(
+    df,
+    target_column,
+    problem_type
+):
+
+    if not target_column:
+
+        return []
+
+    X = df.drop(columns=[target_column])
+
+    y = df[target_column]
+
+    X = X.select_dtypes(include="number")
+
+    X = X.fillna(X.median())
+
+    if problem_type["type"] in [
+        "Binary Classification",
+        "Multi-Class Classification"
+    ]:
+
+        model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42
+        )
+
+    else:
+
+        model = RandomForestRegressor(
+            n_estimators=100,
+            random_state=42
+        )
+
+    model.fit(X, y)
+
+    results = []
+
+    for feature, importance in zip(
+        X.columns,
+        model.feature_importances_
+    ):
+
+        results.append({
+            "feature": feature,
+            "importance": round(
+                float(importance),
+                4
+            )
+        })
+
+    results.sort(
+        key=lambda x: x["importance"],
+        reverse=True
+    )
+
+    return results[:10]
+

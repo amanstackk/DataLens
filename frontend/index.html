@@ -87,14 +87,19 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-group">
-                    <div class="nav-title">Analysis</div>
+                    <div class="nav-title">Phase 1: EDA</div>
                     <a href="#overview" class="nav-item active" data-section="overview">Overview</a>
                     <a href="#data-quality" class="nav-item" data-section="data-quality">Data Quality</a>
                     <a href="#statistics" class="nav-item" data-section="statistics">Statistics</a>
                     <a href="#feature-analysis" class="nav-item" data-section="feature-analysis">Feature Analysis</a>
                 </div>
                 <div class="nav-group">
-                    <div class="nav-title">Intelligence <span class="badge-new">Soon</span></div>
+                    <div class="nav-title">Phase 2: Analyst <span class="badge-new" style="background: rgba(59,130,246,0.15); color: var(--accent-primary);">New</span></div>
+                    <a href="#analyst-insights" class="nav-item" data-section="analyst-insights">Analyst Insights</a>
+                    <a href="#target-analysis" class="nav-item" data-section="target-analysis">Target Analysis</a>
+                </div>
+                <div class="nav-group" id="nav-group-ml" style="opacity: 0.5; pointer-events: none;">
+                    <div class="nav-title">Phase 3: ML (Locked) <span class="badge-new">Soon</span></div>
                     <a href="#ml-readiness" class="nav-item" data-section="ml-readiness">ML Readiness</a>
                     <a href="#ai-insights" class="nav-item" data-section="ai-insights">AI Insights</a>
                     <a href="#recommendations" class="nav-item" data-section="recommendations">Recommendations</a>
@@ -192,6 +197,49 @@
                     <div class="empty-state">
                         <p>Tree-based feature importance scores will be available in future updates.</p>
                     </div>
+                </div>
+            </section>
+
+            <!-- SECTION: ANALYST INSIGHTS -->
+            <section id="section-analyst-insights" class="dashboard-section hidden">
+                <div id="analyst-insights-container">
+                    <!-- Analyst insights injected here -->
+                </div>
+            </section>
+
+            <!-- SECTION: TARGET ANALYSIS -->
+            <section id="section-target-analysis" class="dashboard-section hidden">
+                <div class="card" style="border-left: 4px solid var(--accent-primary); background: rgba(59, 130, 246, 0.03);">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <div style="color: var(--accent-primary);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="21.17" y1="8" x2="12" y2="8"></line><line x1="3.95" y1="6.06" x2="8.54" y2="14"></line></svg>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">🎯 What are you trying to predict?</h3>
+                            <p class="text-muted" style="font-size: 0.95rem;">DataLens analyzed your dataset and identified several possible target columns. Select one to continue with advanced ML analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 mt-4" id="target-candidates-container">
+                    <!-- Target candidates injected here -->
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3>Choose Any Column ▼</h3>
+                        <span class="text-sm text-muted">Override DataLens suggestions manually</span>
+                    </div>
+                    <select id="manual-target-select" style="width: 100%; padding: 0.75rem; background: var(--bg-main); border: 1px solid var(--border-strong); color: var(--text-primary); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                        <option value="">Select a column...</option>
+                        <!-- Options injected here -->
+                    </select>
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                    <button id="btn-continue-ml" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem; opacity: 0.5; cursor: not-allowed;" disabled>
+                        Confirm & Continue ML Analysis
+                    </button>
                 </div>
             </section>
 

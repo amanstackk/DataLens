@@ -40,6 +40,7 @@ const DashboardState = {
         this.outliers = data.outliers;
         this.healthScore = data.healthScore;
         this.recommendations = data.recommendations;
+        this.targetAnalysis = data.targetAnalysis;
         // Map any future modules here
     }
 };
@@ -440,6 +441,229 @@ const Renderers = {
                 `;
             }
         }
+    },
+
+    renderAnalystInsights() {
+        const s = DashboardState;
+        const container = document.getElementById('analyst-insights-container');
+        if (!container) return;
+
+        let insightsHtml = `
+            <div class="analyst-message">
+                <div style="color: var(--accent-primary);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 0.5rem;">DataLens AI Analyst</h3>
+                    <p class="text-muted text-sm mb-2">I have analyzed your dataset and prepared an initial exploratory data analysis. The dataset contains <strong>${(s.overview?.rows || 0).toLocaleString()}</strong> rows and <strong>${s.overview?.columns || 0}</strong> features.</p>
+                    <p class="text-muted text-sm">Please review the EDA sections and then proceed to <strong>Target Analysis</strong> to configure advanced Machine Learning modeling.</p>
+                </div>
+            </div>
+        `;
+        container.innerHTML = insightsHtml;
+    },
+
+    renderTargetAnalysis() {
+        const s = DashboardState;
+        const ta = s.targetAnalysis;
+        const container = document.getElementById('target-candidates-container');
+        const select = document.getElementById('manual-target-select');
+        const btnContinue = document.getElementById('btn-continue-ml');
+
+        if (!ta || !container || !select) return;
+
+        // Reset state
+        btnContinue.disabled = true;
+        btnContinue.style.opacity = '0.5';
+        btnContinue.style.cursor = 'not-allowed';
+
+        // Populate dropdown
+        select.innerHTML = '<option value="">Select a column...</option>';
+        (ta.allColumns || []).forEach(col => {
+            const opt = document.createElement('option');
+            opt.value = col;
+            opt.textContent = col;
+            select.appendChild(opt);
+        });
+
+        // Render Candidates
+        container.innerHTML = '';
+        const candidates = ta.candidates || [];
+        
+        candidates.forEach((cand, idx) => {
+            let confClass = 'conf-high';
+            if (cand.confidence < 80) confClass = 'conf-med';
+            if (cand.confidence < 60) confClass = 'conf-low';
+
+            const card = document.createElement('div');
+            card.className = 'card target-card';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
+                    <div style="font-weight: 600; font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-primary);">⭐ ${cand.name}</div>
+                    <div class="conf-badge ${confClass}">${cand.confidence}% Match</div>
+                </div>
+                <p class="text-muted text-sm" style="flex: 1;">${cand.reason}</p>
+            `;
+
+            card.addEventListener('click', () => {
+                // Deselect others
+                container.querySelectorAll('.target-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                
+                // Sync select dropdown
+                select.value = cand.name;
+                
+                // Update state
+                ta.selectedTarget = cand.name;
+                enableContinueButton();
+            });
+
+            container.appendChild(card);
+            
+            // Auto-select the top candidate
+            if (idx === 0) {
+                card.click();
+            }
+        });
+
+        // Handle dropdown manual override
+        select.addEventListener('change', (e) => {
+            ta.selectedTarget = e.target.value;
+            // Deselect cards
+            container.querySelectorAll('.target-card').forEach(c => c.classList.remove('selected'));
+            
+            // Check if selected value matches a card
+            const matchCard = Array.from(container.children).find(c => c.querySelector('.font-mono').textContent.includes(e.target.value));
+            if (matchCard) matchCard.classList.add('selected');
+
+            if (ta.selectedTarget) enableContinueButton();
+            else disableContinueButton();
+        });
+
+        function enableContinueButton() {
+            btnContinue.disabled = false;
+            btnContinue.style.opacity = '1';
+            btnContinue.style.cursor = 'pointer';
+        }
+
+        function disableContinueButton() {
+            btnContinue.disabled = true;
+            btnContinue.style.opacity = '0.5';
+            btnContinue.style.cursor = 'not-allowed';
+        }
+    },
+
+    renderMLReadiness() {
+        const s = DashboardState;
+        const container = document.getElementById('section-ml-readiness');
+        if (!container) return;
+
+        const target = s.targetAnalysis?.selectedTarget;
+        if (!target) return;
+
+        // Real ML Readiness Score from backend problemType
+        let score = s.healthScore?.score || 70;
+        let reasons = [];
+        
+        const problemType = s.mlAnalysis?.problemType || { type: 'Unknown', reason: 'Could not determine' };
+        
+        const targetMissing = s.missingPercentage?.[target] || 0;
+        if (targetMissing > 0) {
+            score -= 20;
+            reasons.push(`Target column '${target}' has ${targetMissing}% missing values. Rows with missing targets must be dropped.`);
+        } else {
+            reasons.push(`Target column '${target}' is fully populated.`);
+        }
+
+        reasons.push(problemType.reason);
+
+        score = Math.max(0, Math.min(100, score));
+        let colorCode = score >= 80 ? 'var(--semantic-success)' : score >= 50 ? 'var(--semantic-warning)' : 'var(--semantic-danger)';
+
+        // Use feature importance from backend
+        const features = s.mlAnalysis?.featureImportance || [];
+
+        container.innerHTML = `
+            <div class="card" style="border-left: 4px solid var(--accent-primary);">
+                <div class="card-header">
+                    <h3>ML Readiness Score</h3>
+                    <span class="text-sm text-muted">Analysis for predicting '${target}'</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 2rem; margin-top: 1.5rem;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 4rem; font-weight: 700; color: ${colorCode}; line-height: 1;">${score}</div>
+                        <div class="text-muted text-sm mt-2">/ 100 Readiness</div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Problem Type: <span style="color: var(--accent-primary);">${problemType.type}</span></h4>
+                        <ul style="padding-left: 1.25rem; color: var(--text-secondary); line-height: 1.8;">
+                            ${reasons.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Feature Predictive Power</h3>
+                        <span class="text-sm text-muted">Tree-based Feature Importance for ${target}</span>
+                    </div>
+                    <div style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                        <p>Computed using Random Forest feature importances.</p>
+                        <div style="margin-top: 1rem; border-left: 3px solid var(--border-strong); padding-left: 1rem;">
+                            ${features.map(f => {
+                                return `<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>${f.feature}</span>
+                                    <span style="font-family: var(--font-mono); color: var(--accent-primary);">${(f.importance * 100).toFixed(1)}%</span>
+                                </div>`;
+                            }).join('') || '<p>No features found.</p>'}
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Data Quality Concerns</h3>
+                        <span class="text-sm text-muted">Items to resolve before modeling</span>
+                    </div>
+                    <ul style="margin-top: 1rem; padding-left: 1.25rem; color: var(--semantic-warning); line-height: 1.6;">
+                        ${(s.recommendations || []).slice(0, 4).map(r => `<li style="margin-bottom: 0.5rem;">${r}</li>`).join('') || '<li style="color: var(--semantic-success)">No major concerns!</li>'}
+                    </ul>
+                </div>
+            </div>
+        `;
+    },
+
+    renderAIInsights() {
+        const s = DashboardState;
+        const container = document.getElementById('section-ai-insights');
+        if (!container) return;
+
+        const target = s.targetAnalysis?.selectedTarget || 'unknown';
+        const problemType = s.mlAnalysis?.problemType?.type || 'Predictive Modeling';
+
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h3>AI Executive Summary</h3>
+                    <span class="text-sm text-muted">Generated by DataLens Intelligence</span>
+                </div>
+                <div style="margin-top: 1.5rem; line-height: 1.8; color: var(--text-primary); font-size: 1.05rem;">
+                    <p style="margin-bottom: 1rem;">
+                        The dataset contains <strong>${(s.overview?.rows || 0).toLocaleString()}</strong> observations and <strong>${s.overview?.columns || 0}</strong> features. 
+                        Based on the selection of <strong>'${target}'</strong> as the target variable, this represents a <strong>${problemType}</strong> task.
+                    </p>
+                    <p style="margin-bottom: 1rem;">
+                        Overall dataset health is <strong>${s.healthScore?.score || 'moderate'}%</strong>. 
+                        There are <strong>${s.numericColumns}</strong> numeric features and <strong>${s.categoricalColumns}</strong> categorical features. 
+                        Missing data affects <strong>${Object.values(s.missingPercentage || {}).filter(v => v > 0).length}</strong> columns, which will require imputation strategies before training a model.
+                    </p>
+                    <p>
+                        <strong>Next Steps:</strong> We recommend handling missing values in the affected columns, encoding the categorical variables, and establishing a baseline model using algorithms suitable for the target cardinality.
+                    </p>
+                </div>
+            </div>
+        `;
     }
 };
 
@@ -512,6 +736,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- Continue ML Trigger ---
+    document.getElementById('btn-continue-ml')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btn-continue-ml');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Analyzing...';
+        btn.disabled = true;
+
+        try {
+            const target = DashboardState.targetAnalysis?.selectedTarget;
+            const fileName = DashboardState.savedFileName;
+
+            const response = await fetch('http://localhost:5000/api/ml-analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName, targetColumn: target })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'ML Analysis failed');
+
+            DashboardState.mlAnalysis = data;
+
+            // Unlock ML Sections
+            const mlGroup = document.getElementById('nav-group-ml');
+            if (mlGroup) {
+                mlGroup.style.opacity = '1';
+                mlGroup.style.pointerEvents = 'auto';
+                mlGroup.querySelector('.nav-title').innerHTML = 'Phase 3: ML Analysis';
+            }
+            
+            // Compute and Render Phase 3 Modules purely in Frontend
+            Renderers.renderMLReadiness();
+            Renderers.renderAIInsights();
+            
+            // Transition to ML Readiness
+            navigateToSection('ml-readiness');
+        } catch (err) {
+            alert('Error running ML Analysis: ' + err.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+
     // --- Core Processing ---
     async function processFile(file) {
         if (!file.name.toLowerCase().endsWith('.csv')) {
@@ -554,6 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeDashboard(apiData, fileName) {
         UIState.clearCharts();
         DashboardState.set(apiData, fileName);
+        DashboardState.savedFileName = apiData.savedFileName || fileName; // Store saved name for ML API
 
         // Update Header
         document.getElementById('sidebar-filename').textContent = fileName;
@@ -565,9 +834,11 @@ document.addEventListener('DOMContentLoaded', () => {
         Renderers.renderStatistics();
         Renderers.renderFeatureAnalysis();
         Renderers.renderRecommendations();
+        Renderers.renderAnalystInsights();
+        Renderers.renderTargetAnalysis();
 
         // Show Dashboard and Reset to Overview
         showView('dashboard');
-        navigateToSection('overview');
+        navigateToSection('analyst-insights');
     }
 });
