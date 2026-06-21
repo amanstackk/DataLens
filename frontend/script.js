@@ -456,7 +456,7 @@ const Renderers = {
                 <div>
                     <h3 style="margin-bottom: 0.5rem;">DataLens AI Analyst</h3>
                     <p class="text-muted text-sm mb-2">I have analyzed your dataset and prepared an initial exploratory data analysis. The dataset contains <strong>${(s.overview?.rows || 0).toLocaleString()}</strong> rows and <strong>${s.overview?.columns || 0}</strong> features.</p>
-                    <p class="text-muted text-sm">Please review the EDA sections and then proceed to <strong>Target Analysis</strong> to configure advanced Machine Learning modeling.</p>
+                    <p class="text-muted text-sm">Please review the EDA sections and then proceed to <strong>Target Selection</strong> to configure advanced Machine Learning modeling.</p>
                 </div>
             </div>
         `;

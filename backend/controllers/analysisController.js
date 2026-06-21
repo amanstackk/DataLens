@@ -23,15 +23,14 @@ export const runMlAnalysis = async (req, res) => {
             });
         }
 
-        const rootDir = path.join(
+        const uploadDir = path.join(
             __dirname,
-            "..",
             "..",
             "uploads"
         );
 
         const filePath = path.join(
-            rootDir,
+            uploadDir,
             fileName
         );
 
