@@ -9,6 +9,12 @@ app.use(express.json());
 
 const PORT = 5000;
 
+app.get("/", (req, res) => {
+    res.json({
+        success: true,
+        message: "DataLens API Running"
+    });
+});
 app.use("/api", analysisRoutes);
 app.use("/api", uploadRoutes);
 
