@@ -7,8 +7,8 @@ __pycache__/
 *.pyc
 
 # Uploads
-backend/uploads/*
-
+uploads/*
+!uploads/.gitkeep
 # Environment
 .env
 
