@@ -15,9 +15,7 @@ from analyzers import (
     get_outliers,
     get_health_score,
     get_recommendations,
-    get_target_analysis,
-    get_problem_type,
-    get_feature_importance
+    get_target_analysis
 )
 
 file_path = sys.argv[1]

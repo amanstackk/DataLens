@@ -246,16 +246,16 @@ const Renderers = {
         if (healthContainer && s.healthScore !== undefined && s.healthScore !== null) {
             const scoreValue = typeof s.healthScore === 'object' ? s.healthScore.score : s.healthScore;
             let colorCode = 'var(--semantic-success)';
-            let icon = '🛡️';
+            let icon = '';
             let statusText = 'Excellent';
 
             if (scoreValue < 50) {
                 colorCode = 'var(--semantic-danger)';
-                icon = '⚠️';
+                icon = '';
                 statusText = 'Critical';
             } else if (scoreValue < 80) {
                 colorCode = 'var(--semantic-warning)';
-                icon = '🔔';
+                icon = '';
                 statusText = 'Needs Improvement';
             }
 
@@ -295,8 +295,8 @@ const Renderers = {
         // 2. Missing Values Charts
         const chartsContainer = document.getElementById('dq-charts-container');
         chartsContainer.innerHTML = 
-            UI.createChartCard('Missing Values (Count)', 'missingCountChart', 'No missing values found ✓', true) +
-            UI.createChartCard('Missing Values (%)', 'missingPctChart', 'No missing values found ✓', true);
+            UI.createChartCard('Missing Values (Count)', 'missingCountChart', 'No missing values found ', true) +
+            UI.createChartCard('Missing Values (%)', 'missingPctChart', 'No missing values found ', true);
 
         // Filter missing values > 0
         const mvEntries = Object.entries(s.missingValues || {}).filter(([, v]) => v > 0);
@@ -554,119 +554,167 @@ const Renderers = {
     },
 
     renderMLReadiness() {
-        const s = DashboardState;
-        const container = document.getElementById('section-ml-readiness');
-        if (!container) return;
+        const mlData = DashboardState.mlAnalysis;
+        const data = mlData?.mlReadiness;
+        const problemType = mlData?.problemType;
+        const features = mlData?.featureImportance || [];
+        const container = document.getElementById('ml-readiness-container');
+        if (!container || !data) return;
 
-        const target = s.targetAnalysis?.selectedTarget;
-        if (!target) return;
+        let strengthsHtml = (data.strengths || []).map(s => `<div style="margin-bottom: 0.25rem;">&middot; ${s}</div>`).join('');
+        let issuesHtml = (data.issues || []).map(i => `<div style="margin-bottom: 0.25rem;">&middot; ${i}</div>`).join('');
 
-        // Real ML Readiness Score from backend problemType
-        let score = s.healthScore?.score || 70;
-        let reasons = [];
-        
-        const problemType = s.mlAnalysis?.problemType || { type: 'Unknown', reason: 'Could not determine' };
-        
-        const targetMissing = s.missingPercentage?.[target] || 0;
-        if (targetMissing > 0) {
-            score -= 20;
-            reasons.push(`Target column '${target}' has ${targetMissing}% missing values. Rows with missing targets must be dropped.`);
-        } else {
-            reasons.push(`Target column '${target}' is fully populated.`);
-        }
-
-        reasons.push(problemType.reason);
-
-        score = Math.max(0, Math.min(100, score));
-        let colorCode = score >= 80 ? 'var(--semantic-success)' : score >= 50 ? 'var(--semantic-warning)' : 'var(--semantic-danger)';
-
-        // Use feature importance from backend
-        const features = s.mlAnalysis?.featureImportance || [];
+        let gradeColor = 'var(--success)';
+        if(data.score < 80) gradeColor = 'var(--warning)';
+        if(data.score < 60) gradeColor = 'var(--error)';
 
         container.innerHTML = `
-            <div class="card" style="border-left: 4px solid var(--accent-primary);">
-                <div class="card-header">
-                    <h3>ML Readiness Score</h3>
-                    <span class="text-sm text-muted">Analysis for predicting '${target}'</span>
+            <div class="card font-mono" style="font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-default); padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <div>ML Readiness</div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <span class="num-tabular">[<span class="animated-number" data-target="${data.score || 0}">0</span>/100]</span>
+                        <span style="border: 1px solid ${gradeColor}; color: ${gradeColor}; padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); font-weight: 500;">Grade ${data.grade || 'N/A'}</span>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 2rem; margin-top: 1.5rem;">
-                    <div style="text-align: center;">
-                        <div style="font-size: 4rem; font-weight: 700; color: ${colorCode}; line-height: 1;">${score}</div>
-                        <div class="text-muted text-sm mt-2">/ 100 Readiness</div>
+                <div style="display: flex; gap: 4rem;">
+                    <div>
+                        <div style="margin-bottom: 0.5rem; color: var(--text-primary);">Strengths</div>
+                        <div style="color: var(--text-secondary);">${strengthsHtml || '<div>&middot; None</div>'}</div>
                     </div>
                     <div>
-                        <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Problem Type: <span style="color: var(--accent-primary);">${problemType.type}</span></h4>
-                        <ul style="padding-left: 1.25rem; color: var(--text-secondary); line-height: 1.8;">
-                            ${reasons.map(r => `<li>${r}</li>`).join('')}
-                        </ul>
+                        <div style="margin-bottom: 0.5rem; color: var(--text-primary);">Risks</div>
+                        <div style="color: var(--text-secondary);">${issuesHtml || '<div>&middot; None</div>'}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 mt-4">
+            <div class="grid grid-cols-2 mt-4" style="gap: 1.5rem;">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Feature Predictive Power</h3>
-                        <span class="text-sm text-muted">Tree-based Feature Importance for ${target}</span>
+                        <h3>Problem Type Detection</h3>
+                        <span class="text-sm text-muted">Auto-detected from target variable</span>
                     </div>
-                    <div style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
-                        <p>Computed using Random Forest feature importances.</p>
-                        <div style="margin-top: 1rem; border-left: 3px solid var(--border-strong); padding-left: 1rem;">
-                            ${features.map(f => {
-                                return `<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <span>${f.feature}</span>
-                                    <span style="font-family: var(--font-mono); color: var(--accent-primary);">${(f.importance * 100).toFixed(1)}%</span>
-                                </div>`;
-                            }).join('') || '<p>No features found.</p>'}
+                    <div style="margin-top: 1rem;">
+                        <div style="font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem;">
+                            ${problemType?.type || 'Unknown'}
+                        </div>
+                        <div style="color: var(--text-secondary); line-height: 1.5; font-size: 13px;">
+                            ${problemType?.reason || 'Could not determine problem type.'}
                         </div>
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <h3>Data Quality Concerns</h3>
-                        <span class="text-sm text-muted">Items to resolve before modeling</span>
+                        <h3>Feature Predictive Power</h3>
+                        <span class="text-sm text-muted">Tree-based Feature Importance</span>
                     </div>
-                    <ul style="margin-top: 1rem; padding-left: 1.25rem; color: var(--semantic-warning); line-height: 1.6;">
-                        ${(s.recommendations || []).slice(0, 4).map(r => `<li style="margin-bottom: 0.5rem;">${r}</li>`).join('') || '<li style="color: var(--semantic-success)">No major concerns!</li>'}
-                    </ul>
+                    <div style="margin-top: 1rem; color: var(--text-muted); font-size: 13px;">
+                        <div>
+                            ${features.map(f => {
+                                return `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding: 0.3rem 0;">
+                                    <span>${f.feature}</span>
+                                    <span class="num-tabular" style="color: var(--text-primary);">${(f.importance * 100).toFixed(1)}%</span>
+                                </div>`;
+                            }).join('') || '<p>No features found.</p>'}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
     },
 
-    renderAIInsights() {
-        const s = DashboardState;
-        const container = document.getElementById('section-ai-insights');
-        if (!container) return;
+    renderDatasetInsights() {
+        const data = DashboardState.mlAnalysis?.datasetInsights;
+        const container = document.getElementById('dataset-insights-container');
+        if (!container || !Array.isArray(data)) return;
 
-        const target = s.targetAnalysis?.selectedTarget || 'unknown';
-        const problemType = s.mlAnalysis?.problemType?.type || 'Predictive Modeling';
+        const positive = data.filter(i => i.severity === 'positive').map(i => `<strong>${i.title}:</strong> ${i.description}`);
+        const warning = data.filter(i => i.severity === 'warning').map(i => `<strong>${i.title}:</strong> ${i.description}`);
+        const info = data.filter(i => i.severity === 'info').map(i => `<strong>${i.title}:</strong> ${i.description}`);
+
+        const makeCards = (arr, title, icon, colorClass) => {
+            if (!arr || !arr.length) return '';
+            return `
+                <div class="card mt-4" style="border-left: 3px solid ${colorClass};">
+                    <div class="card-header">
+                        <h4 style="color: ${colorClass}; display: flex; align-items: center; gap: 0.5rem;">${icon} ${title}</h4>
+                    </div>
+                    <ul style="padding-left: 1.25rem; margin-top: 1rem; color: var(--text-secondary); line-height: 1.6;">
+                        ${arr.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        };
 
         container.innerHTML = `
-            <div class="card">
-                <div class="card-header">
-                    <h3>AI Executive Summary</h3>
-                    <span class="text-sm text-muted">Generated by DataLens Intelligence</span>
-                </div>
-                <div style="margin-top: 1.5rem; line-height: 1.8; color: var(--text-primary); font-size: 1.05rem;">
-                    <p style="margin-bottom: 1rem;">
-                        The dataset contains <strong>${(s.overview?.rows || 0).toLocaleString()}</strong> observations and <strong>${s.overview?.columns || 0}</strong> features. 
-                        Based on the selection of <strong>'${target}'</strong> as the target variable, this represents a <strong>${problemType}</strong> task.
-                    </p>
-                    <p style="margin-bottom: 1rem;">
-                        Overall dataset health is <strong>${s.healthScore?.score || 'moderate'}%</strong>. 
-                        There are <strong>${s.numericColumns}</strong> numeric features and <strong>${s.categoricalColumns}</strong> categorical features. 
-                        Missing data affects <strong>${Object.values(s.missingPercentage || {}).filter(v => v > 0).length}</strong> columns, which will require imputation strategies before training a model.
-                    </p>
-                    <p>
-                        <strong>Next Steps:</strong> We recommend handling missing values in the affected columns, encoding the categorical variables, and establishing a baseline model using algorithms suitable for the target cardinality.
-                    </p>
+            <div class="dashboard-header-container" style="margin-bottom: 1rem;">
+                <h3>Dataset Insights</h3>
+            </div>
+            ${makeCards(positive, 'Positive Insights', '', 'var(--semantic-success)')}
+            ${makeCards(warning, 'Warnings', '', 'var(--semantic-warning)')}
+            ${makeCards(info, 'Information', '', 'var(--accent-primary)')}
+        `;
+    },
+
+    renderModelRecommendations() {
+        const data = DashboardState.mlAnalysis?.modelRecommendations;
+        const container = document.getElementById('model-recommendations-container');
+        if (!container || !data) return;
+
+        let html = `
+            <div class="dashboard-header-container" style="margin-bottom: 1.5rem; border-bottom: none; padding-bottom: 0;">
+                <div style="display: flex; flex-direction: column;">
+                    <h3>Model Recommendations</h3>
+                    <span class="text-sm text-muted">Architectures suitable for this dataset</span>
                 </div>
             </div>
+            <div class="grid grid-cols-2">
         `;
+        
+        data.forEach(model => {
+            html += `
+                <div class="card" style="padding: 1.25rem;">
+                    <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.5rem; color: var(--text-primary);">${model.name || model.modelName || 'Model'}</div>
+                    <div class="text-secondary" style="font-size: 13px; line-height: 1.5;">
+                        Recommended because ${model.reason ? model.reason.toLowerCase() : 'it performs well'}.
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    },
+
+    renderBaselineModel() {
+        const data = DashboardState.mlAnalysis?.baselineModel;
+        const container = document.getElementById('baseline-model-container');
+        if (!container || !data) return;
+
+        if (!data.model) {
+            container.innerHTML = `
+                <div class="card num-tabular" style="font-size: 13px;">
+                    <div style="margin-bottom: 1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary);">Baseline Performance</div>
+                    <div class="text-secondary">Baseline model could not be trained: ${data.reason || 'Not enough valid data or features.'}</div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="card num-tabular" style="font-size: 13px;">
+                <div style="margin-bottom: 1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary);">Baseline Performance</div>
+                <div style="display: flex; gap: 4rem; border-bottom: 1px solid var(--border-default); padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                    <div><span class="text-secondary">Model:</span> <span style="color: var(--text-primary); font-weight: 500;">${data.model || 'N/A'}</span></div>
+                    <div><span class="text-secondary">Metric:</span> <span style="color: var(--text-primary); font-weight: 500;">${data.metric || 'N/A'}</span></div>
+                </div>
+                <div><span class="text-secondary">Result:</span> <span style="font-size: 18px; font-weight: 500; color: var(--text-primary);"><span class="animated-number" data-target="${data.score || 0}">0</span>${data.metric === 'Accuracy' ? '%' : ''}</span></div>
+            </div>
+        `;
+        
+        setTimeout(animateNumbers, 100);
     }
 };
-
 // ==========================================
 // 6. CONTROLLER & NAVIGATION
 // ==========================================
@@ -739,6 +787,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Continue ML Trigger ---
     document.getElementById('btn-continue-ml')?.addEventListener('click', async () => {
         const btn = document.getElementById('btn-continue-ml');
+        const errorDiv = document.getElementById('ml-analysis-error');
+        if (errorDiv) errorDiv.style.display = 'none';
+
         const originalText = btn.innerHTML;
         btn.innerHTML = 'Analyzing...';
         btn.disabled = true;
@@ -757,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(data.message || 'ML Analysis failed');
 
             DashboardState.mlAnalysis = data;
+            window.mlResponse = data;
 
             // Unlock ML Sections
             const mlGroup = document.getElementById('nav-group-ml');
@@ -768,18 +820,44 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Compute and Render Phase 3 Modules purely in Frontend
             Renderers.renderMLReadiness();
-            Renderers.renderAIInsights();
+            Renderers.renderDatasetInsights();
+            Renderers.renderModelRecommendations();
+            Renderers.renderBaselineModel();
+            
+            const exportBtn = document.getElementById('export-report-btn');
+            if(exportBtn) exportBtn.classList.remove('hidden');
             
             // Transition to ML Readiness
             navigateToSection('ml-readiness');
         } catch (err) {
-            alert('Error running ML Analysis: ' + err.message);
+            const errorDiv = document.getElementById('ml-analysis-error');
+            if (errorDiv) {
+                errorDiv.textContent = 'Error: ' + err.message;
+                errorDiv.style.display = 'block';
+            } else {
+                alert('Error running ML Analysis: ' + err.message);
+            }
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     });
 
+
+    // --- Export Report ---
+    document.getElementById('export-report-btn')?.addEventListener('click', () => {
+        const report = {
+            eda: window.lastResponse,
+            ml: window.mlResponse
+        };
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'datalens-report.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
     // --- Core Processing ---
     async function processFile(file) {
         if (!file.name.toLowerCase().endsWith('.csv')) {
@@ -804,6 +882,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             if (!response.ok) throw new Error(data.message || 'Upload failed');
+
+            window.lastResponse = data;
 
             clearInterval(loader);
             progressBar.style.width = '100%';
@@ -839,6 +919,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show Dashboard and Reset to Overview
         showView('dashboard');
-        navigateToSection('analyst-insights');
+        navigateToSection('overview');
     }
 });
+// Utility for counting up numbers
+function animateNumbers() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.querySelectorAll('.animated-number').forEach(el => {
+            el.innerText = el.getAttribute('data-target');
+            el.classList.remove('animated-number');
+        });
+        return;
+    }
+    
+    document.querySelectorAll('.animated-number').forEach(el => {
+        const target = parseFloat(el.getAttribute('data-target'));
+        const duration = 600; // ms
+        const frames = 30;
+        const stepTime = duration / frames;
+        let current = 0;
+        
+        // simple ease-out
+        const easeOutQuad = t => t * (2 - t);
+        
+        let frame = 0;
+        const timer = setInterval(() => {
+            frame++;
+            const progress = frame / frames;
+            const easedProgress = easeOutQuad(progress);
+            current = target * easedProgress;
+            
+            if (Number.isInteger(target)) {
+                el.innerText = Math.round(current);
+            } else {
+                el.innerText = current.toFixed(2);
+            }
+            
+            if (frame >= frames) {
+                el.innerText = target;
+                el.classList.remove('animated-number');
+                clearInterval(timer);
+            }
+        }, stepTime);
+    });
+}

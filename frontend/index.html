@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DataLens | Intelligence Platform</title>
     <meta name="description" content="AI-powered Data Quality, EDA, and ML Readiness platform.">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=5">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,6 +19,7 @@
             <span>DataLens</span>
         </div>
         <div class="nav-actions">
+            <button class="btn btn-primary btn-sm hidden" id="export-report-btn" style="margin-right: 1rem;">Generate Report</button>
             <button class="btn btn-outline btn-sm hidden" id="new-analysis-btn">New Analysis</button>
         </div>
     </nav>
@@ -94,15 +95,17 @@
                     <a href="#feature-analysis" class="nav-item" data-section="feature-analysis">Feature Analysis</a>
                 </div>
                 <div class="nav-group">
-                    <div class="nav-title">Phase 2: Analyst <span class="badge-new" style="background: rgba(59,130,246,0.15); color: var(--accent-primary);">New</span></div>
+                    <div class="nav-title">Phase 2: Analyst <span class="badge-new" >New</span></div>
                     <a href="#analyst-insights" class="nav-item" data-section="analyst-insights">Analyst Insights</a>
                     <a href="#target-analysis" class="nav-item" data-section="target-analysis">Target Analysis</a>
+                    <a href="#recommendations" class="nav-item" data-section="recommendations">Recommendations</a>
                 </div>
                 <div class="nav-group" id="nav-group-ml" style="opacity: 0.5; pointer-events: none;">
-                    <div class="nav-title">Phase 3: ML (Locked) <span class="badge-new">Soon</span></div>
+                    <div class="nav-title">Phase 3: ML (Locked)</div>
                     <a href="#ml-readiness" class="nav-item" data-section="ml-readiness">ML Readiness</a>
-                    <a href="#ai-insights" class="nav-item" data-section="ai-insights">AI Insights</a>
-                    <a href="#recommendations" class="nav-item" data-section="recommendations">Recommendations</a>
+                    <a href="#dataset-insights" class="nav-item" data-section="dataset-insights">Dataset Insights</a>
+                    <a href="#model-recommendations" class="nav-item" data-section="model-recommendations">Model Recommendations</a>
+                    <a href="#baseline-model" class="nav-item" data-section="baseline-model">Baseline Model</a>
                 </div>
             </nav>
         </aside>
@@ -147,15 +150,7 @@
                     <!-- Outliers table injected here -->
                 </div>
 
-                <div class="card mt-4" id="dq-anomaly-container">
-                    <div class="card-header">
-                        <h3>Anomaly Detection</h3>
-                        <span class="text-sm text-muted">Phase 3 Module Placeholder</span>
-                    </div>
-                    <div class="empty-state">
-                        <p>Isolation Forest anomaly detection will be available in future updates.</p>
-                    </div>
-                </div>
+
             </section>
 
             <!-- SECTION: STATISTICS -->
@@ -168,15 +163,7 @@
                     <!-- Data Types Table Injected Here -->
                 </div>
 
-                <div class="card mt-4" id="stats-distribution-container">
-                    <div class="card-header">
-                        <h3>Distribution Analysis</h3>
-                        <span class="text-sm text-muted">Phase 2 Module Placeholder</span>
-                    </div>
-                    <div class="empty-state">
-                        <p>Detailed distribution plots (histograms/KDE) will be available in future updates.</p>
-                    </div>
-                </div>
+
             </section>
 
             <!-- SECTION: FEATURE ANALYSIS -->
@@ -189,15 +176,7 @@
                     <!-- Class Imbalance Charts Injected Here -->
                 </div>
 
-                <div class="card mt-4" id="feature-importance-container">
-                    <div class="card-header">
-                        <h3>Feature Importance</h3>
-                        <span class="text-sm text-muted">Phase 2 Module Placeholder</span>
-                    </div>
-                    <div class="empty-state">
-                        <p>Tree-based feature importance scores will be available in future updates.</p>
-                    </div>
-                </div>
+
             </section>
 
             <!-- SECTION: ANALYST INSIGHTS -->
@@ -209,13 +188,13 @@
 
             <!-- SECTION: TARGET ANALYSIS -->
             <section id="section-target-analysis" class="dashboard-section hidden">
-                <div class="card" style="border-left: 4px solid var(--accent-primary); background: rgba(59, 130, 246, 0.03);">
+                <div class="card" class="card">
                     <div style="display: flex; gap: 1rem; align-items: flex-start;">
-                        <div style="color: var(--accent-primary);">
+                        <div class="text-primary">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="21.17" y1="8" x2="12" y2="8"></line><line x1="3.95" y1="6.06" x2="8.54" y2="14"></line></svg>
                         </div>
                         <div>
-                            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">🎯 What are you trying to predict?</h3>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Target Selection</h3>
                             <p class="text-muted" style="font-size: 0.95rem;">DataLens analyzed your dataset and identified several possible target columns. Select one to continue with advanced ML analysis.</p>
                         </div>
                     </div>
@@ -227,61 +206,51 @@
 
                 <div class="card mt-4">
                     <div class="card-header">
-                        <h3>Choose Any Column ▼</h3>
+                        <h3>Choose Any Column</h3>
                         <span class="text-sm text-muted">Override DataLens suggestions manually</span>
                     </div>
-                    <select id="manual-target-select" style="width: 100%; padding: 0.75rem; background: var(--bg-main); border: 1px solid var(--border-strong); color: var(--text-primary); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                    <select id="manual-target-select" style="width: 100%; padding: 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-default); color: var(--text-primary); border-radius: var(--radius-sm); font-size: 13px;">
                         <option value="">Select a column...</option>
                         <!-- Options injected here -->
                     </select>
                 </div>
 
-                <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                <div style="margin-top: 2rem; display: flex; justify-content: flex-end; align-items: center; gap: 1rem;">
+                    <div id="ml-analysis-error" style="color: var(--error); font-size: 13px; display: none;"></div>
                     <button id="btn-continue-ml" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem; opacity: 0.5; cursor: not-allowed;" disabled>
                         Confirm & Continue ML Analysis
                     </button>
                 </div>
             </section>
 
-            <!-- SECTION: ML READINESS (PLACEHOLDER) -->
-            <section id="section-ml-readiness" class="dashboard-section hidden">
-                <div class="card module-placeholder">
-                    <div class="placeholder-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    </div>
-                    <h3>ML Readiness Score</h3>
-                    <p class="text-muted">Phase 3 Module</p>
-                    <p class="mt-2 text-sm max-w-md mx-auto">This module will evaluate your dataset against standard ML requirements (target leakage, cardinality, train/test split viability) and generate a readiness score.</p>
-                </div>
-            </section>
-
-            <!-- SECTION: AI INSIGHTS (PLACEHOLDER) -->
-            <section id="section-ai-insights" class="dashboard-section hidden">
-                <div class="card module-placeholder">
-                    <div class="placeholder-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    </div>
-                    <h3>AI Generated Executive Report</h3>
-                    <p class="text-muted">Phase 3 Module</p>
-                    <p class="mt-2 text-sm max-w-md mx-auto">This module will use an LLM to generate plain-English summaries, business insights, and automated data cleaning code snippets based on the analysis.</p>
-                </div>
-            </section>
-
-            <!-- SECTION: RECOMMENDATIONS (PLACEHOLDER) -->
+            <!-- SECTION: RECOMMENDATIONS -->
             <section id="section-recommendations" class="dashboard-section hidden">
-                <div class="card module-placeholder">
-                    <div class="placeholder-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    </div>
-                    <h3>Actionable Recommendations</h3>
-                    <p class="text-muted">Phase 2 Module</p>
-                    <p class="mt-2 text-sm max-w-md mx-auto">This module will provide specific, actionable steps to improve data quality, such as imputation strategies or identifying highly collinear features to drop.</p>
-                </div>
+                <div id="recommendations-container"></div>
+            </section>
+
+            <!-- SECTION: ML READINESS -->
+            <section id="section-ml-readiness" class="dashboard-section hidden">
+                <div id="ml-readiness-container"></div>
+            </section>
+
+            <!-- SECTION: DATASET INSIGHTS -->
+            <section id="section-dataset-insights" class="dashboard-section hidden">
+                <div id="dataset-insights-container"></div>
+            </section>
+
+            <!-- SECTION: MODEL RECOMMENDATIONS -->
+            <section id="section-model-recommendations" class="dashboard-section hidden">
+                <div id="model-recommendations-container"></div>
+            </section>
+
+            <!-- SECTION: BASELINE MODEL -->
+            <section id="section-baseline-model" class="dashboard-section hidden">
+                <div id="baseline-model-container"></div>
             </section>
 
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=6"></script>
 </body>
 </html>

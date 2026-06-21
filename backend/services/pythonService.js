@@ -40,7 +40,7 @@ export const runMlPython = (filePath, targetColumn) => {
         const pythonProcess = spawn(
             "python",
             [
-                "../python-service/advanced_analysis.py",
+                "../python-service/ml_analysis.py",
                 filePath,
                 targetColumn
             ]
