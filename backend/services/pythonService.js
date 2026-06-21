@@ -6,7 +6,7 @@ export const runPython = (filePath) => {
         const pythonProcess = spawn(
             "python",
             [
-                "../python-service/app.py",
+                "./python-service/app.py",
                 filePath
             ]
         );
@@ -40,7 +40,7 @@ export const runMlPython = (filePath, targetColumn) => {
         const pythonProcess = spawn(
             "python",
             [
-                "../python-service/ml_analysis.py",
+                "./python-service/ml_analysis.py",
                 filePath,
                 targetColumn
             ]
