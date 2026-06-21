@@ -798,7 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const target = DashboardState.targetAnalysis?.selectedTarget;
             const fileName = DashboardState.savedFileName;
 
-            const response = await fetch('https://datalens-6fvf.onrender.com', {
+            const response = await fetch('https://datalens-6fvf.onrender.com/api/ml-analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fileName, targetColumn: target })
@@ -878,7 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData();
             formData.append('dataset', file);
             
-            const response = await fetch('https://datalens-6fvf.onrender.com', { method: 'POST', body: formData });
+            const response = await fetch('https://datalens-6fvf.onrender.com/api/upload', { method: 'POST', body: formData });
             const data = await response.json();
             
             if (!response.ok) throw new Error(data.message || 'Upload failed');
